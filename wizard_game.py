@@ -35,10 +35,9 @@ egg_list = (
     'Turtle Egg'
 )
 
-k = np.random.choice([2,3,4,5], 1, p=[0.1, 0.3, 0.45, 0.15])[0]
-print(k)
-sNumbers = random.choices(item_dict['Mountains'], weights=[weight_dict[num] for num in item_dict['Mountains']], k=k)
-print(sNumbers)
+hatch_list = {
+    'Turtle Egg': 'Turtle'
+}
 
 class User:
     def __init__(self, username, quest_time, items={}, potions={}, pets={}, eggs={}, nursery=[]):
@@ -57,8 +56,12 @@ class User:
         for item in new_items:
             time.sleep(1)
             print("  - " + item)
-            
-            if item not in self.items:
+            if item in egg_list:
+                if item not in self.eggs:
+                    self.eggs[item] = 1
+                else:
+                    self.eggs[item] += 1
+            elif item not in self.items:
                 self.items[item] = 1
             else:
                 self.items[item] += 1
@@ -81,7 +84,7 @@ class User:
         for key, value in self.pets.items():
             print("  - " + key + ": " + str(value))
 
-    def showPets(self):
+    def showEggs(self):
         print("Eggs")
         print("-------------")
         for key, value in self.eggs.items():
@@ -108,31 +111,44 @@ def show_inventory():
         res = input(": ")
         if res.lower().strip() == '1':
             user.showItems()
-            exit_await = input("Press [enter] to go back...")
+            input("Press [enter] to go back...")
             continue
-        if res.lower().strip() == '2':
+        elif res.lower().strip() == '2':
             user.showPotions()
-            exit_await = input("Press [enter] to go back...")
+            input("Press [enter] to go back...")
             continue
-        if res.lower().strip() == '3':
+        elif res.lower().strip() == '3':
             user.showPets()
-            exit_await = input("Press [enter] to go back...")
+            input("Press [enter] to go back...")
             continue
-        if res.lower().strip() == '4':
+        elif res.lower().strip() == '4':
             user.showEggs()
-            exit_await = input("Press [enter] to go back...")
-        if res.lower().strip() == '5':
+            input("Press [enter] to go back...")
+            continue
+        elif res.lower().strip() == '5':
             break
+        else:
+            print("Not a valid command... Try again")
+            continue
 
 def nursery():
     user.showNursery()
     while True:
-        
+        for i in range(len(user.nursery)):
+            if user.nursery[i][1] < time.time_ns:
+                print(f"{item[0]} has Hatched!!")
+                new_pet = hatch_list[item[0]] 
+                if new_pet not in user.pets:
+                    user.pets[new_pet] = 1
+                else:
+                    user.pets[new_pet] += 1
+            del user.nursery[i]
+            continue
         if len(user.nursery) >= 3:
             print('Nursery Full...')
             time.sleep(2)
             break
-        if len(user.nursery) == 0:
+        if len(user.eggs) == 0:
             print("No Eggs in Inventory... \nCome back later")
             time.sleep(2)
             break
@@ -160,14 +176,14 @@ def nursery():
                         user.eggs[l1[int(res2)]] -= 1
                         if user.eggs[l1[int(res2)]] == 0:
                             del user.eggs[l1[int(res2)]]
-                        continue
+                        
                     else:
                         print('Not a valid number... Try again')
-                        continue
+                        
 
                 except:
-                        print('Not a valid number... Try again')
-                        continue
+                    print('Not a valid number... Try again')
+                    
             elif res == '2':
                 print('Come back soon!')
                 break
@@ -179,13 +195,54 @@ def make_potion():
     while True:
         print("""
             What potion would you like to brew?
+            press [X] to exit...
             -------------------
-            [1] Coming Soon
-            --------------------
+            [1] Potion of Regeneration: 'Berry', 'Root'
+            [2] Flask of Misfortune: Rabbits foot, Coal
+            [3] Ale of Electricity: Copper, Firefly
+            [4] Potion of Strength: Iron, Fish
+            [5] Unstable Potion of Health: Radioactive Mud, Butterfly Wings
+            [6] Slow Poison: Turtle Shell, Honey
+            [7] Poison of Instant Death: Alpine Nightshade, Box Jellyfish
+            
             """)
-        time.sleep(2)
+        
+        recipe_dict = {
+            '1': 'Potion of Regeneration',
+            '2': 'Flask of Misfortune',
+            '3': 'Ale of Electricity',
+            '4': 'Potion of Strength',
+            '5': 'Unstable Potion of Health',
+            '6': 'Slow Poison',
+            '7': 'Poison of Instant Death'
+        }
+
+
+        res = input("")
+        if res not in recipe_dict:
+            if res == 'x' or res == 'X':
+                return
+            print("Not a valid command... Try again.")
+            continue
+            
+        potion = recipe_dict[res]
+        for item in recipe_book[potion]:
+            if item not in user.items:
+                print('Not enough ingredients')
+                return
+        for item in recipe_book[potion]:
+            user.items[item] -= 1
+            if user.items[item] <= 0:
+                del user.items[item]
+        
+        if potion not in user.potions:
+            user.potions[potion] = 1
+        else:
+            user.potions[potion] += 1
+
+        print(f"{potion} added to POTION INVENTORY! ")
         # Still need to make this optimal
-        break
+        continue
 
 def quest_option():
     while True:
@@ -236,6 +293,7 @@ def quest_option():
                 break
 
 running = True
+
 # Initializing The New Player
 username = input("What is your name... ")
 print(f"Welcome {username} to your new world of adventure.")
@@ -245,22 +303,29 @@ user = User(username, time.time_ns())
 while running:
     print(
         """
+        What would you like to do? 
+        press [X] to quit the game...
+        ----------------------------
         [1] Go on a Quest
         [2] Check your Inventory
         [3] Check out the Nursery
         [4] Brew some Potions
+        [5] See your Pets 
+        ----------------------------
         """
     )
 
     res = input("What would you like to do? ")
     if res == '1':
         quest_option()
-    if res == '2':
+    elif res == '2':
         show_inventory()
-    if res == '3':
+    elif res == '3':
         nursery()
-    if res == '4 ':
+    elif res == '4':
         make_potion()
-
-
+    elif res == '5':
+        user.showPets()
+    elif res.lower() == 'x':
+        break
 
